@@ -1,11 +1,15 @@
 package dev.raegous.tag;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Particle;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -13,10 +17,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Collection;
 import java.util.Optional;
 
-public class UltimateTagPlugin extends JavaPlugin {
+public class UltimateTagPlugin extends JavaPlugin implements Listener {
     private TagInfo tagInfo;
 
     private void setupTagData() {
+        tagInfo = new TagInfo();
         tagInfo = tagInfo.loadData();
         if (tagInfo == null) {
             tagInfo = new TagInfo();
@@ -25,21 +30,15 @@ public class UltimateTagPlugin extends JavaPlugin {
     }
 
     public void tagRandomPlayer() {
-        Optional<? extends Player> randomPlayer = getRandom(Bukkit.getServer().getOnlinePlayers());
+        Optional<? extends Player> randomPlayer = getRandom(Bukkit.getOnlinePlayers());
         randomPlayer.ifPresent(this::tag);
     }
 
     @Override
     public void onEnable() {
+        getServer().getPluginManager().registerEvents(this, this);
         setupTagData();
-
-        getLogger().info("UltimateTag is enabled!");
         tagRandomPlayer();
-    }
-
-    @Override
-    public void onDisable() {
-        getLogger().info("UltimateTag is disabled!");
     }
 
     private void tag(Player player) {
@@ -50,15 +49,21 @@ public class UltimateTagPlugin extends JavaPlugin {
         tagInfo.setActiveTaggerUsername(player.getName());
         getLogger().info("Setting current tagger to " + player.getName());
 
+        player.getWorld().spawnParticle(Particle.BUBBLE_POP, player.getLocation(), 3);
+
         if (by == null) {
-            say(player.getName() + " is now it!");
+            say(player.getName() + " is now it!", ChatColor.AQUA);
         } else {
-            say(player.getName() + " has been tagged by " + by.getName());
+            say(by.getName() + " tagged " + player.getName(), ChatColor.AQUA);
         }
     }
 
     private void say(String message) {
-        Bukkit.getServer().broadcastMessage("[UltimateTag]: " + message);
+        Bukkit.broadcastMessage(message);
+    }
+
+    private void say(String message, ChatColor color) {
+        Bukkit.broadcastMessage(color.toString() + message);
     }
 
     @EventHandler
@@ -72,9 +77,13 @@ public class UltimateTagPlugin extends JavaPlugin {
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         // pvp
         if (event.getDamager() instanceof Player && event.getEntity() instanceof Player) {
-            //player is attacking someone
             Player attacker = (Player)event.getDamager();
             Player attacked = (Player)event.getEntity();
+
+            // if thorns is the cause of the damage, ignore
+            if (event.getCause() == EntityDamageEvent.DamageCause.THORNS) {
+                return;
+            }
 
             if (attacker.getName().equals(tagInfo.getActiveTaggerUsername())) {
                 tag(attacked, attacker);
@@ -99,6 +108,10 @@ public class UltimateTagPlugin extends JavaPlugin {
                 }
             }
 
+            if (args.length < 1) {
+                return false;
+            }
+
             Player target = (Bukkit.getServer().getPlayer(args[0]));
             if (target == null) {
                 sender.sendMessage(args[0] + " is not online!");
@@ -106,8 +119,8 @@ public class UltimateTagPlugin extends JavaPlugin {
             }
 
             getLogger().info(sender.getName() + " tagged " + target.getName());
-
             tag(target);
+
             return true;
         }
 

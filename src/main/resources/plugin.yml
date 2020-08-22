@@ -1,5 +1,5 @@
-name: Tag
-version: 1.0
+name: UltimateTag
+version: 1.0.0
 main: dev.raegous.tag.UltimateTagPlugin
 commands:
   tag:
@@ -7,3 +7,8 @@ commands:
     usage: /<tag> [player]
     permission: ultimatetag.tag
     permission-message: You don't have permission to change who is it
+
+permissions:
+  ultimatetag.tag:
+    description: Allows you to change who is it
+    default: op

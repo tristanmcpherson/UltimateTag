@@ -45,8 +45,6 @@ public class TagInfo implements Serializable {
             in.close();
             return data;
         } catch (ClassNotFoundException | IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
             return null;
         }
     }
