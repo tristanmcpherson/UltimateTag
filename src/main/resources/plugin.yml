@@ -1,0 +1,9 @@
+name: Tag
+version: 1.0
+main: dev.raegous.tag.UltimateTagPlugin
+commands:
+  tag:
+    description: Tags a player
+    usage: /<tag> [player]
+    permission: ultimatetag.tag
+    permission-message: You don't have permission to change who is it
